@@ -46,7 +46,9 @@ testy_stats_local.passed_count = 0;\
 testy_stats_local.failed_count = 0;\
 X ## _test(&testy_stats_local);\
 printf("Passed: %u\nFailed: %u\n", testy_stats_local.passed_count, testy_stats_local.failed_count);\
-if(testy_stats_local.failed_count == 0)\
+if (testy_stats_local.passed_count + testy_stats_local.failed_count == 0)\
+{ printf(ANSI_COLOR_YELLOW "Test EMPTY\n\n" ANSI_COLOR_RESET); }\
+else if(testy_stats_local.failed_count == 0)\
 { printf(ANSI_COLOR_GREEN "Test PASSED\n\n" ANSI_COLOR_RESET); }\
 else { printf(ANSI_COLOR_RED "Test FAILED\n\n" ANSI_COLOR_RESET); }\
 } while(false)
