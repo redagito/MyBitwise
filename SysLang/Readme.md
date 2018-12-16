@@ -1,6 +1,6 @@
-# MyBitwise
+# SysLang (SyL)
 
-My personal attempt of following the Bitwise project and building my own implementation.
+System programming language based on Ion.
 
 ## Requirements
 

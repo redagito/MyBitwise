@@ -1,2 +1,3 @@
 # MyBitwise
-My own implementation of the Bitwise project https://github.com/pervognsen/bitwise
+
+Following the Bitwise project (https://github.com/pervognsen/bitwise) and building my own implementation.
