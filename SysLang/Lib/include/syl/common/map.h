@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 /**
-* Map
+* Map for 64bit values / pointer hash table
 */
 
 typedef struct map_t

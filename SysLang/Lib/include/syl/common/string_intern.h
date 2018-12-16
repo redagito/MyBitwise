@@ -4,17 +4,15 @@
 
 /**
 * String interning
+* Canonicalize different representations of the same string content.
 */
 
-typedef const char* interned_string_t;
+/**
+* Returns interned copy of string.
+*/
+const char* string_intern(const char* str);
 
-typedef struct intern_t
-{
-	size_t length;
-	struct intern_t* next;
-	char str[];
-} intern_t;
-
-interned_string_t string_intern_range(const char* start, const char* end);
-
-interned_string_t string_intern(const char* str);
+/**
+* Returns interned copy of substring.
+*/
+const char* string_intern_range(const char* start, const char* end);
