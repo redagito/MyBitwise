@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef WIN32
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>

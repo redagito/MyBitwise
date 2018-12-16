@@ -40,3 +40,21 @@ void* memdup(void* src, size_t size)
 	memcpy(dest, src, size);
 	return dest;
 }
+
+char* strf(const char* fmt, ...)
+{
+	// Required size for the formatted string
+	va_list args;
+	va_start(args, fmt);
+	size_t size = 1 + vsnprintf(NULL, 0, fmt, args);
+	va_end(args);
+
+	// Allocate and write string
+	char* str = xmalloc(size);
+	va_list args;
+	va_start(args, fmt);
+	size_t size = 1 + vsnprintf(str, size, fmt, args);
+	va_end(args);
+
+	return str;
+}
