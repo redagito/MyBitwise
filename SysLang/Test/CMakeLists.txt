@@ -6,7 +6,7 @@
 add_executable (${PROJECT_NAME}Test ${SOURCE_FILES})
 
 set_target_properties (${PROJECT_NAME}Test PROPERTIES 
-	C_STANDARD 99
+	C_STANDARD 11
 )
 
 target_include_directories (${PROJECT_NAME}Test

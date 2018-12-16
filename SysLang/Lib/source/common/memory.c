@@ -51,9 +51,8 @@ char* strf(const char* fmt, ...)
 
 	// Allocate and write string
 	char* str = xmalloc(size);
-	va_list args;
 	va_start(args, fmt);
-	size_t size = 1 + vsnprintf(str, size, fmt, args);
+	vsnprintf(str, size, fmt, args);
 	va_end(args);
 
 	return str;
