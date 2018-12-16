@@ -1,9 +1,14 @@
+# Visual Studio
 .vs/
+x64/
+Debug/
+Release/
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
 *.sln
 
+# CMake
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
