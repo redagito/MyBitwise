@@ -12,4 +12,4 @@ typedef struct map_t
 	uint64_t* values;
 	size_t length;
 	size_t capacity;
-};
+} map_t;

@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
@@ -51,11 +51,23 @@ if(testy_stats_local.failed_count == 0)\
 else { printf(ANSI_COLOR_RED "Test FAILED\n\n" ANSI_COLOR_RESET); }\
 } while(false)
 
+#define TESTY_ON_FAIL(X) do{\
+testy_stats->failed_count++; \
+printf(ANSI_COLOR_RED "Check failed: %s at %s:%u\n" ANSI_COLOR_RESET, #X, __FILENAME__, __LINE__); \
+}while(false)
+
+// Checks expression and updates stats
+#define TESTY_CHECK(X) do{\
+if((X)) { testy_stats->passed_count++; }\
+else {\
+TESTY_ON_FAIL(X);\
+} } while (false)
+
+// As above but returns on fail
 #define TESTY_ASSERT(X) do\
 {\
 if((X)) { testy_stats->passed_count++; }\
 else {\
-testy_stats->failed_count++;\
-printf(ANSI_COLOR_RED "Check failed: %s at %s:%u\n" ANSI_COLOR_RESET, #X, __FILENAME__, __LINE__);\
+TESTY_ON_FAIL(X);\
 return; \
 } } while (false)
