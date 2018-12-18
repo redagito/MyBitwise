@@ -13,4 +13,14 @@ TESTY_TEST(flag)
 	flag_add_enum("enum", &i, "An enum flag", enum_options, sizeof(enum_options) / sizeof(*enum_options));
 	flag_add_str("string", &s, "strfag", "A string flag");
 	flag_print_usage();
+
+	char* argv[] = {"-boolean", "-enum", "FOBA", "-string", "newstrdef", NULL};
+	char** argvp = argv;
+	int argc = 5;
+
+	flag_parse(&argc, &argvp);
+
+	TESTY_ASSERT(b == true);
+	TESTY_ASSERT(i == 3);
+	TESTY_ASSERT(strcmp(s, "newstrdef") == 0);
 }

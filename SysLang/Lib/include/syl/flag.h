@@ -28,5 +28,6 @@ void flag_print_usage();
 
 /**
 * Parse the flags from the command line
+* Assumes argv points to position [1] instead of [0]
 */
-const char* flag_parse(int* argc_ptr, const char*** argv_ptr);
+void flag_parse(int* argc_ptr, const char*** argv_ptr);

@@ -34,8 +34,9 @@ void path_join(char path[MAX_PATH], const char* src);
 
 /**
 * Returns pointer the file name in path
+* Path may not be normalized
 */
-const char* path_file(const char path[MAX_PATH]);
+const char* path_file(const char* path);
 
 /**
 * Returns pointer to file extension in path

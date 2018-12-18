@@ -64,12 +64,13 @@ void path_join(char path[MAX_PATH], const char* src)
 	path_normalize(path);
 }
 
-const char* path_file(const char path[MAX_PATH])
+const char* path_file(const char* path)
 {
 	// Start at end of path, move backwards and search for '/'
 	for (const char* curr = path + strlen(path); curr != path; --curr)
 	{
-		if (curr[-1] == '/')
+		// Might not be normalized path
+		if (curr[-1] == '/' || curr[-1] == '\\')
 		{
 			// Found separator
 			return curr;

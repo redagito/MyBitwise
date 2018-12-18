@@ -29,7 +29,7 @@ typedef struct flag_t
 	const char* arg_name;
 	size_t num_options;
 
-	// Default value for each flag type
+	// Value for the flag
 	// TODO Why not union?
 	struct
 	{
@@ -53,21 +53,6 @@ static flag_t* flag_get(const char* name)
 		}
 	}
 	return NULL;
-}
-
-void flag_add_bool(const char* name, bool* ptr, const char* help)
-{
-	buffer_push(flags, (flag_t) { .type = FLAG_BOOL, .name = name, .help = help, .ptr.b = ptr });
-}
-
-void flag_add_str(const char* name, const char** ptr, const char* arg_name, const char* help)
-{
-	buffer_push(flags, (flag_t) { .type = FLAG_STR, .name = name, .help = help, .arg_name = arg_name, .ptr.s = ptr });
-}
-
-void flag_add_enum(const char* name, int* ptr, const char* help, const char** options, int num_options)
-{
-	buffer_push(flags, (flag_t) { .type = FLAG_ENUM, .name = name, .help = help, .ptr.i = ptr, .options = options, .num_options = num_options });
 }
 
 static void flag_print_usage_enum(flag_t flag, char(*format)[256], char(*note)[256])
@@ -100,9 +85,24 @@ static void flag_print_usage_str(flag_t flag, char(*format)[256], char(*note)[25
 	}
 }
 
-static void flag_print_usage_default(flag_t flag, char (*format)[256], char (*note)[256])
+static void flag_print_usage_default(flag_t flag, char(*format)[256], char(*note)[256])
 {
 	snprintf(*format, sizeof(*format), "%s", flag.name);
+}
+
+void flag_add_bool(const char* name, bool* ptr, const char* help)
+{
+	buffer_push(flags, (flag_t) { .type = FLAG_BOOL, .name = name, .help = help, .ptr.b = ptr });
+}
+
+void flag_add_str(const char* name, const char** ptr, const char* arg_name, const char* help)
+{
+	buffer_push(flags, (flag_t) { .type = FLAG_STR, .name = name, .help = help, .arg_name = arg_name, .ptr.s = ptr });
+}
+
+void flag_add_enum(const char* name, int* ptr, const char* help, const char** options, int num_options)
+{
+	buffer_push(flags, (flag_t) { .type = FLAG_ENUM, .name = name, .help = help, .ptr.i = ptr, .options = options, .num_options = num_options });
 }
 
 void flag_print_usage()
@@ -119,9 +119,11 @@ void flag_print_usage()
 		case FLAG_STR:
 			flag_print_usage_str(flag, &format, &note);
 			break;
+
 		case FLAG_ENUM:
 			flag_print_usage_enum(flag, &format, &note);
 			break;
+
 		case FLAG_BOOL:
 		default:
 			flag_print_usage_default(flag, &format, &note);
@@ -131,7 +133,85 @@ void flag_print_usage()
 	}
 }
 
-const char* flag_parse(int* argc_ptr, const char*** argv_ptr)
+void flag_parse(int* argc_ptr, const char*** argv_ptr)
 {
-	return NULL;
+	int argc = *argc_ptr;
+	const char** argv = *argv_ptr;
+
+	int i = 0;
+	for (; i < argc; ++i)
+	{
+		const char* arg = argv[i];
+		const char* name = arg;
+		if (*name != '-')
+		{
+			// Invalid / unhandled argument
+			break;
+		}
+		++name;
+		if (*name == '-')
+		{
+			++name;
+		}
+
+		flag_t* flag = flag_get(name);
+		if (flag == NULL)
+		{
+			printf("Unknown flag: %s\n", arg);
+			continue;
+		}
+
+		switch (flag->type)
+		{
+		case FLAG_BOOL:
+			*flag->ptr.b = true;
+			break;
+
+		case FLAG_STR:
+			if (i + 1 >= argc)
+			{
+				printf("No value after %s\n", arg);
+				break;
+			}
+			++i;
+			*flag->ptr.s = argv[i];
+			break;
+
+		case FLAG_ENUM:
+		{
+			if (i + 1 >= argc)
+			{
+				printf("No value after %s\n", arg);
+				break;
+			}
+			++i;
+			const char* option = argv[i];
+			bool found = false;
+
+			// Set enum if option is valid value
+			for (int j = 0; j < flag->num_options; ++j)
+			{
+				if (strcmp(flag->options[j], option) == 0)
+				{
+					// Option is valid value
+					*flag->ptr.i = j;
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+			{
+				printf("Invalid value '%s' for %s\n", option, arg);
+			}
+			break;
+		}
+		default:
+			printf("Invalid or unhandled flag type set for %s", arg);
+		}
+	}
+
+	// Update argument pointers
+	// Skip over handled arguments
+	*argc_ptr = argc - i;
+	*argv_ptr = argv + i;
 }
