@@ -7,6 +7,14 @@
 #include <string.h>
 #include <stdio.h>
 
+// OS specific includes
+#ifdef _WIN32
+  #include <io.h>
+  #include <errno.h>
+#else
+  #include <dirent.h>
+#endif
+
 void path_normalize(char* path)
 {
 	char* curr = path;
@@ -59,7 +67,7 @@ void path_join(char path[MAX_PATH], const char* src)
 const char* path_file(const char path[MAX_PATH])
 {
 	// Start at end of path, move backwards and search for '/'
-	for (char* curr = path + strlen(path); curr != path; --curr)
+	for (const char* curr = path + strlen(path); curr != path; --curr)
 	{
 		if (curr[-1] == '/')
 		{
@@ -73,7 +81,7 @@ const char* path_file(const char path[MAX_PATH])
 const char* path_ext(const char path[MAX_PATH])
 {
 	// Start at end of path, move backwards and search for '.'
-	for (char* curr = path + strlen(path); curr != path; --curr)
+	for (const char* curr = path + strlen(path); curr != path; --curr)
 	{
 		if (curr[-1] == '.')
 		{
@@ -87,4 +95,16 @@ const char* path_ext(const char path[MAX_PATH])
 		}
 	}
 	return path;
+}
+
+void path_absolute(char path[MAX_PATH])
+{
+	char rel_path[MAX_PATH];
+	path_copy(rel_path, path);
+#ifdef _WIN32
+	_fullpath(path, rel_path, MAX_PATH);
+#else
+	realpath(rel_path, path);
+#endif
+	path_normalize(path);
 }

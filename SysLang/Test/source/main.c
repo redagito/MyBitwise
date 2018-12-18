@@ -10,6 +10,7 @@ TESTY_DCL(string_util);
 TESTY_DCL(string_intern);
 
 TESTY_DCL(path);
+TESTY_DCL(flag);
 
 int main(int argc, char** argv)
 {
@@ -23,6 +24,7 @@ int main(int argc, char** argv)
 	TESTY_CALL(string_intern);
 
 	TESTY_CALL(path);
+	TESTY_CALL(flag);
 
 	return 0;
 }

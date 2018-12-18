@@ -64,4 +64,12 @@ TESTY_TEST(path)
 	TESTY_ASSERT(strcmp(path_ext("."), "") == 0);
 	TESTY_ASSERT(strcmp(path_ext(".exe"), "exe") == 0);
 	TESTY_ASSERT(strcmp(path_ext("/foo/bar"), "/foo/bar") == 0);
+
+	// path_absolute
+	path_copy(path, "C:/foo/bar/../");
+	path_absolute(path);
+	TESTY_ASSERT(strcmp(path, "C:/foo") == 0);
+	path_copy(path, "C:/foo/bar/../..");
+	path_absolute(path);
+	TESTY_ASSERT(strcmp(path, "C:") == 0);
 }

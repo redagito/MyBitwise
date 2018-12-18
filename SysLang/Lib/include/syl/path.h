@@ -41,3 +41,8 @@ const char* path_file(const char path[MAX_PATH]);
 * Returns pointer to file extension in path
 */
 const char* path_ext(const char path[MAX_PATH]);
+
+/**
+* Creates absolute path
+*/
+void path_absolute(char path[MAX_PATH]);
