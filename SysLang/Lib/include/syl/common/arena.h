@@ -23,10 +23,25 @@ typedef struct arena_t
 arena_t arena_create();
 
 /**
+* Disables/enables new block allocation on all arenas
+* Affects subsequent calls to arena_alloc.
+* Any call that causes a block alloc will result in a fatal error.
+*/
+void arena_disable_grow();
+void arena_enable_grow();
+
+/**
 * Allocate new memory area on the arena
 * This will either use an existing memory block or create a new one.
 */
 void* arena_alloc(arena_t* arena, size_t size);
+
+/**
+* Allocates new memory area on the arena
+* This will try to allocate memory on the current block or yield a fatal error.
+* Use this to prevent new block allocations.
+*/
+void* arena_alloc_no_grow(arena_t* arena, size_t size);
 
 /**
 * Free the whole arena

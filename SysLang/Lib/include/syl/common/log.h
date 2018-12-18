@@ -7,9 +7,14 @@
 /**
 * Prints error message
 */
-void error(const char* fmt, ...);
+void log_warning(const char* fmt, ...);
+
+/**
+* Prints error message
+*/
+void log_error(const char* fmt, ...);
 
 /**
 * Prints fatal error message and exits the program
 */
-void fatal(const char* fmt, ...);
+void log_fatal(const char* fmt, ...);

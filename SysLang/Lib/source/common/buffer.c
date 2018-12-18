@@ -47,7 +47,7 @@ static size_t buffer_vsnprintf(char* buffer, const char* fmt, va_list args)
 	size_t length = vsnprintf(buffer_end(buffer), capacity, fmt, args);
 	if (length <= 0)
 	{
-		fatal("Failed to format string: Encoding error occured");
+		log_fatal("Failed to format string: Encoding error occured");
 	}
 
 	// Length including null-terminator

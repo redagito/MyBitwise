@@ -26,8 +26,9 @@
 
 typedef struct testy_stats_t
 {
-	uint32_t passed_count;
-	uint32_t failed_count;
+	uint32_t passed;
+	uint32_t failed;
+	uint32_t empty;
 } testy_stats_t;
 
 /**
@@ -36,31 +37,40 @@ typedef struct testy_stats_t
 #define TESTY_TEST(X) void X ## _test(testy_stats_t* testy_stats)
 #define TESTY_DCL(X) extern TESTY_TEST(X)
 
+#define TESTY_INIT(AC, AV) testy_stats_t testy_stats_global = {0}
+
+#define TESTY_END() do {\
+printf("End result:\nPassed: %u\nFailed: %u\nEmpty:%u\n", testy_stats_global.passed, testy_stats_global.failed, testy_stats_global.empty);\
+if (testy_stats_global.passed + testy_stats_global.failed == 0)\
+{ printf(ANSI_COLOR_YELLOW "EMPTY\n\n" ANSI_COLOR_RESET); }\
+else if(testy_stats_global.failed == 0)\
+{ printf(ANSI_COLOR_GREEN "PASSED\n\n" ANSI_COLOR_RESET); }\
+else { printf(ANSI_COLOR_RED "FAILED\n\n" ANSI_COLOR_RESET); }\
+} while(false)
+
 /**
 * Run tests inside of main
 */
 #define TESTY_CALL(X) do {\
 printf("Running test: %s...\n", #X);\
-testy_stats_t testy_stats_local;\
-testy_stats_local.passed_count = 0;\
-testy_stats_local.failed_count = 0;\
+testy_stats_t testy_stats_local = {0};\
 X ## _test(&testy_stats_local);\
-printf("Passed: %u\nFailed: %u\n", testy_stats_local.passed_count, testy_stats_local.failed_count);\
-if (testy_stats_local.passed_count + testy_stats_local.failed_count == 0)\
-{ printf(ANSI_COLOR_YELLOW "Test EMPTY\n\n" ANSI_COLOR_RESET); }\
-else if(testy_stats_local.failed_count == 0)\
-{ printf(ANSI_COLOR_GREEN "Test PASSED\n\n" ANSI_COLOR_RESET); }\
-else { printf(ANSI_COLOR_RED "Test FAILED\n\n" ANSI_COLOR_RESET); }\
+printf("Passed: %u\nFailed: %u\n", testy_stats_local.passed, testy_stats_local.failed);\
+if (testy_stats_local.passed + testy_stats_local.failed == 0)\
+{ printf(ANSI_COLOR_YELLOW "Test EMPTY\n\n" ANSI_COLOR_RESET); testy_stats_global.empty++; }\
+else if(testy_stats_local.failed == 0)\
+{ printf(ANSI_COLOR_GREEN "Test PASSED\n\n" ANSI_COLOR_RESET); testy_stats_global.passed++; }\
+else { printf(ANSI_COLOR_RED "Test FAILED\n\n" ANSI_COLOR_RESET); testy_stats_global.failed++; }\
 } while(false)
 
 #define TESTY_ON_FAIL(X) do{\
-testy_stats->failed_count++; \
+testy_stats->failed++; \
 printf(ANSI_COLOR_RED "Check failed: %s at %s:%u\n" ANSI_COLOR_RESET, #X, __FILENAME__, __LINE__); \
 }while(false)
 
 // Checks expression and updates stats
 #define TESTY_CHECK(X) do{\
-if((X)) { testy_stats->passed_count++; }\
+if((X)) { testy_stats->passed++; }\
 else {\
 TESTY_ON_FAIL(X);\
 } } while (false)
@@ -68,7 +78,7 @@ TESTY_ON_FAIL(X);\
 // As above but returns on fail
 #define TESTY_ASSERT(X) do\
 {\
-if((X)) { testy_stats->passed_count++; }\
+if((X)) { testy_stats->passed++; }\
 else {\
 TESTY_ON_FAIL(X);\
 return; \

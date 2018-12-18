@@ -56,6 +56,7 @@ TESTY_TEST(path)
 	TESTY_ASSERT(strcmp(path_file(""), "") == 0);
 	TESTY_ASSERT(strcmp(path_file("/"), "") == 0);
 	TESTY_ASSERT(strcmp(path_file("/a/b/c"), "c") == 0);
+	TESTY_ASSERT(strcmp(path_file("/a/b/c/"), "") == 0);
 	TESTY_ASSERT(strcmp(path_file("aaaa"), "aaaa") == 0);
 	TESTY_ASSERT(strcmp(path_file("C:/a/b/c.d"), "c.d") == 0);
 

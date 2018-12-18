@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdbool.h>
+
 /**
 * Language keywords
 */
@@ -29,10 +31,6 @@ const char* default_keyword;
 const char* import_keyword;
 const char* goto_keyword;
 
-const char* first_keyword;
-const char* last_keyword;
-const char* *keywords;
-
 const char* always_name;
 const char* foreign_name;
 const char* complete_name;
@@ -40,4 +38,12 @@ const char* assert_name;
 const char* declare_note_name;
 const char* static_assert_name;
 
+/**
+* Initializes the keywords with their respective values
+*/
 void keywords_init();
+
+/**
+* True if the interned string str is a keyword
+*/
+bool keywords_is_keyword(const char* str);

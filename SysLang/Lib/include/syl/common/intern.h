@@ -10,9 +10,9 @@
 /**
 * Returns interned copy of string.
 */
-const char* string_intern(const char* str);
+const char* intern_string(const char* str);
 
 /**
 * Returns interned copy of substring.
 */
-const char* string_intern_range(const char* start, const char* end);
+const char* intern_string_range(const char* start, const char* end);

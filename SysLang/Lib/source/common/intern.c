@@ -1,4 +1,4 @@
-#include "syl/common/string_intern.h"
+#include "syl/common/intern.h"
 
 #include <string.h>
 #include <stddef.h>
@@ -22,12 +22,12 @@ static arena_t intern_arena;
 // Maps string hash to intern list
 static map_t intern_map;
 
-const char* string_intern(const char* str)
+const char* intern_string(const char* str)
 {
-	return string_intern_range(str, str + strlen(str));
+	return intern_string_range(str, str + strlen(str));
 }
 
-const char* string_intern_range(const char* start, const char* end)
+const char* intern_string_range(const char* start, const char* end)
 {
 	size_t length = end - start;
 	hash_t hash = hash_bytes(start, length);
