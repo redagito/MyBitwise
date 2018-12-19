@@ -24,23 +24,38 @@ void log_warning(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	log_message_internal(stdout, ANSI_COLOR_YELLOW "WARNING" ANSI_COLOR_RESET, fmt, args);
+	log_warning_va(fmt, args);
 	va_end(args);
+}
+
+void log_warning_va(const char* fmt, va_list args)
+{
+	log_message_internal(stdout, ANSI_COLOR_YELLOW "WARNING" ANSI_COLOR_RESET, fmt, args);
 }
 
 void log_error(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	log_message_internal(stderr, ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET, fmt, args);
+	log_error_va(fmt, args);
 	va_end(args);
+}
+
+void log_error_va(const char* fmt, va_list args)
+{
+	log_message_internal(stderr, ANSI_COLOR_RED "ERROR" ANSI_COLOR_RESET, fmt, args);
 }
 
 void log_fatal(const char* fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
-	log_message_internal(stderr, ANSI_COLOR_RED "FATAL" ANSI_COLOR_RESET, fmt, args);
+	log_fatal_va(fmt, args);
 	va_end(args);
 	exit(1);
+}
+
+void log_fatal_va(const char* fmt, va_list args)
+{
+	log_message_internal(stderr, ANSI_COLOR_RED "FATAL" ANSI_COLOR_RESET, fmt, args);
 }

@@ -8,15 +8,15 @@
 #include "syl/common/buffer.h"
 
 // Stretchy buffer containing all keywords
-static const char** keywords;
+static const char** keywords = NULL;
 
 // Pointer to first and last keywords
 // All interned keywords must be between these memory locations
-static const char* first_keyword;
-static const char* last_keyword;
+static const char* first_keyword = NULL;
+static const char* last_keyword = NULL;
 
 // Initialization flag
-static bool initialized;
+static bool initialized = false;
 
 void keywords_init()
 {

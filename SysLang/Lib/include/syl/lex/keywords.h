@@ -31,6 +31,8 @@ const char* default_keyword;
 const char* import_keyword;
 const char* goto_keyword;
 
+// Builtin/reserved identifiers
+// TODO Rename to "identifier" instead of name?
 const char* always_name;
 const char* foreign_name;
 const char* complete_name;
