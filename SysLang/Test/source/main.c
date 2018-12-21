@@ -2,6 +2,7 @@
 
 // Lex
 TESTY_DCL(keywords);
+TESTY_DCL(scan);
 
 // Common
 TESTY_DCL(hash);
@@ -23,6 +24,7 @@ int main(int argc, char** argv)
 	// Lex
 	// keep at beginning of tests
 	TESTY_CALL(keywords);
+	TESTY_CALL(scan);
 
 	// Common
 	TESTY_CALL(buffer);

@@ -24,9 +24,10 @@ typedef enum token_type_t
 	TOKEN_INT,
 	TOKEN_FLOAT,
 	TOKEN_STR,
-	TOKEN_NAME,
+	TOKEN_NAME, // TODO Change to TOKEN_IDENTIFIER
 	TOKEN_NEG,
 	TOKEN_NOT,
+	TOKEN_COMMENT,
 
 	// Multiplicative precedence
 	TOKEN_FIRST_MUL,
@@ -89,15 +90,18 @@ typedef enum token_modifier_t
 	MOD_MULTILINE
 } token_modifier_t;
 
+/**
+* Suffixes for numerical literals
+*/
 typedef enum token_suffix_t
 {
 	SUFFIX_NONE,
-	SUFFIX_D,
-	SUFFIX_U,
-	SUFFIX_L,
-	SUFFIX_UL,
-	SUFFIX_LL,
-	SUFFIX_ULL
+	SUFFIX_D, // double
+	SUFFIX_U, // unsigned
+	SUFFIX_L, // long
+	SUFFIX_UL, // unsigned long
+	SUFFIX_LL, // long long
+	SUFFIX_ULL // unsigned long long
 } token_suffix_t;
 
 /**

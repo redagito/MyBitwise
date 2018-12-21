@@ -30,7 +30,7 @@ typedef struct scan_token_t
 } scan_token_t;
 
 /**
-* Initializes scanner with new stream source
+* Initializes scanner with new stream source and scans first token
 * name - file name or identifier of the stream
 * stream - pointer to beginning of the source code buffer
 */
@@ -40,3 +40,8 @@ void scan_init(const char* name, const char* stream);
 * Scans next token from stream
 */
 void scan_next();
+
+/**
+* Current token in active stream
+*/
+const scan_token_t* scan_get_token();

@@ -34,7 +34,8 @@ typedef struct testy_stats_t
 /**
 * Declare tests outside of main
 */
-#define TESTY_TEST(X) void X ## _test(testy_stats_t* testy_stats)
+#define TESTY_TEST_NAME(X) (testy_ ## X ## _test)
+#define TESTY_TEST(X) void TESTY_TEST_NAME(X)(testy_stats_t* testy_stats)
 #define TESTY_DCL(X) extern TESTY_TEST(X)
 
 #define TESTY_INIT(AC, AV) testy_stats_t testy_stats_global = {0}
@@ -54,7 +55,7 @@ else { printf(ANSI_COLOR_RED "FAILED\n\n" ANSI_COLOR_RESET); }\
 #define TESTY_CALL(X) do {\
 printf("Running test: %s...\n", #X);\
 testy_stats_t testy_stats_local = {0};\
-X ## _test(&testy_stats_local);\
+TESTY_TEST_NAME(X)(&testy_stats_local);\
 printf("Passed: %u\nFailed: %u\n", testy_stats_local.passed, testy_stats_local.failed);\
 if (testy_stats_local.passed + testy_stats_local.failed == 0)\
 { printf(ANSI_COLOR_YELLOW "Test EMPTY\n\n" ANSI_COLOR_RESET); testy_stats_global.empty++; }\

@@ -6,8 +6,13 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <limits.h>
+#include <math.h>
+#include <assert.h>
 
 #include "syl/common/log.h"
+#include "syl/common/buffer.h"
+#include "syl/common/intern.h"
+#include "syl/lex/keywords.h"
 
 static uint8_t char_to_digit[256] = 
 {
@@ -139,7 +144,7 @@ static bool scan_match_keyword(const char* keyword)
 	{
 		return false;
 	}
-	scan_next_token();
+	scan_next();
 	return true;
 }
 
@@ -149,7 +154,7 @@ static bool scan_match_type(token_type_t type)
 	{
 		return false;
 	}
-	scan_next_token();
+	scan_next();
 	return true;
 }
 
@@ -215,6 +220,16 @@ static unsigned long long scan_uintval(int base)
 	return value;
 }
 
+static bool scan_match_char(char c)
+{
+	if (*scan_state.stream != c)
+	{
+		return false;
+	}
+	++scan_state.stream;
+	return true;
+}
+
 /**
 * Try match lowercase char
 * Moves stream forward on success
@@ -229,7 +244,7 @@ static bool scan_match_lowercase(char c)
 	return true;
 }
 
-static void scan_expect(char c)
+static void scan_expect_char(char c)
 {
 	if (*scan_state.stream != c)
 	{
@@ -307,14 +322,66 @@ static void scan_int()
 	}
 }
 
-static void scan_float()
+/**
+* Skip until end of digits in stream
+*/
+static void scan_skip_digits()
 {
-
+	while (isdigit(*scan_state.stream))
+	{
+		++scan_state.stream;
+	}
 }
 
+static void scan_float()
+{
+	const char* start = scan_state.stream;
+
+	// Validate structure of the floating point literal
+	// Scan required part
+	scan_skip_digits();
+	scan_match_char('.');
+	scan_skip_digits();
+
+	// Scan optional exponent
+	if (scan_match_lowercase('e'))
+	{
+		if (*scan_state.stream == '+' || *scan_state.stream == '-')
+		{
+			++scan_state.stream;
+		}
+		if (!isdigit(*scan_state.stream))
+		{
+			scan_log_error_here("Expected digit after float literal exponent, found '%c'", *scan_state.stream);
+		}
+		scan_skip_digits();
+	}
+
+	// Float structure OK, parse
+	// TODO Compare start with current stream pos to determine if
+	// anything got actually scanned?
+	double value = strtod(start, NULL);
+	if (value == HUGE_VAL)
+	{
+		scan_log_error_here("Float literal overflow");
+	}
+
+	// Set token
+	scan_state.token.token.type = TOKEN_FLOAT;
+	scan_state.token.token.float_val = value;
+	if (scan_match_lowercase('d'))
+	{
+		scan_state.token.token.suffix = SUFFIX_D;
+	}
+}
+
+/**
+* Scans hexadecimal escape code
+* Example: x1F
+*/
 static int scan_hex_escape()
 {
-	scan_expect('x');
+	scan_expect_char('x');
 	char curr = *scan_state.stream;
 	
 	// First digit (required)
@@ -342,14 +409,168 @@ static int scan_hex_escape()
 	return value;
 }
 
+/**
+* Character literal
+* Examples: 'a', '\\'
+*/
 static void scan_char()
 {
+	int value = 0;
+	scan_expect_char('\'');
+	if (scan_match_char('\''))
+	{
+		scan_log_error_here("Char literal cannot be empty");
+	}
+	else if (*scan_state.stream == '\n')
+	{
+		scan_log_error_here("Char literal cannot contain newline");
+	}
+	else if (scan_match_char('\\'))
+	{
+		// Char is escaped
+		if (*scan_state.stream == 'x')
+		{
+			// Hex escape sequence
+			value = scan_hex_escape();
+		}
+		else 
+		{
+			// Other escape sequence
+			value = escape_to_char[(unsigned char)*scan_state.stream];
+			if (value == 0 && *scan_state.stream != '0')
+			{
+				scan_log_error_here("Invalid char literal escape \\%c'", *scan_state.stream);
+			}
+			++scan_state.stream;
+		}
+	}
+	else
+	{
+		value = *scan_state.stream;
+		++scan_state.stream;
+	}
 
+	// Closing single quote
+	if (!scan_match_char('\''))
+	{
+		scan_log_error_here("Expected closing char quote, got '%c'", *scan_state.stream);
+	}
+
+	// Set token
+	scan_state.token.token.type = TOKEN_INT;
+	scan_state.token.token.int_val = value;
+	scan_state.token.token.modifier = MOD_CHAR;
 }
 
+// TODO I don't quite understand the logic of this
+// TODO A lot of testcases
+static void scan_str_multi_line(char** str)
+{
+	while (*scan_state.stream != 0)
+	{
+		// Skip empty strings
+		if (scan_state.stream[0] == '"' && scan_state.stream[1] == '"' && scan_state.stream[2] == '"')
+		{
+			scan_state.stream += 3;
+		}
+
+		// Push to buffer
+		if (*scan_state.stream != '\r')
+		{
+			buffer_push(*str, *scan_state.stream);
+		}
+
+		// Process newlines
+		if (*scan_state.stream != '\n')
+		{
+			++scan_state.token.position.line;
+		}
+		++scan_state.stream;
+	}
+
+	// String not closed
+	if (*scan_state.stream == 0)
+	{
+		// TODO How do we know its multiline?
+		// It might be just a multi-part string?
+		scan_log_error_here("Unexpected end of file within multi-line string literal");
+	}
+	scan_state.token.token.modifier = MOD_MULTILINE;
+}
+
+static void scan_str_single_line(char** str)
+{
+	// Single line string
+	while (scan_state.stream != 0 && *scan_state.stream != '\n')
+	{
+		char value = *scan_state.stream;
+		if (value == '\n')
+		{
+			scan_log_error_here("String literal cannot contain newline");
+			break;
+		}
+		else if (scan_match_char('\\'))
+		{
+			// Escape sequence in string
+			if (*scan_state.stream == 'x')
+			{
+				value = scan_hex_escape();
+			}
+			else
+			{
+				value = escape_to_char[(unsigned char)*scan_state.stream];
+				if (value == 0 && *scan_state.stream != '0')
+				{
+					scan_log_error_here("Invalid string literal escape '\\%c'", *scan_state.stream);
+				}
+				++scan_state.stream;
+			}
+		}
+		else
+		{
+			// Current stream char already stored in value
+			++scan_state.stream;
+		}
+
+		buffer_push(*str, value);
+	}
+
+	// Either string is closed or end of stream
+	if (scan_state.stream == 0)
+	{
+		scan_log_error_here("Unexpected end of file within string literal");
+	}
+	else
+	{
+		++scan_state.stream;
+	}
+}
+
+/**
+* Scan string literal
+*/
 static void scan_str()
 {
+	scan_expect_char('"');
+	// String content buffer
+	char* str = NULL;
 
+	// Either single or multiline string
+	if (scan_state.stream[0] == '"' && scan_state.stream[1] == '"')
+	{
+		// Multiple empty string literals
+		scan_state.stream += 2;
+		scan_str_multi_line(&str);
+	}
+	else
+	{
+		scan_str_single_line(&str);
+	}
+	
+	// End string and set token
+	buffer_push(str, 0);
+	scan_state.token.token.type = TOKEN_STR;
+	scan_state.token.token.str_val = str;
 }
 
 void scan_init(const char* name, const char* stream)
@@ -362,10 +583,128 @@ void scan_init(const char* name, const char* stream)
 	scan_state.token.position.line = 1;
 
 	// Scan first token from stream
-	scan_next_token();
+	scan_next();
 }
+
+static void scan_skip_spaces()
+{
+	while (isspace(*scan_state.stream))
+	{
+		if (*scan_state.stream == '\n')
+		{
+			scan_state.line_start = scan_state.stream;
+			++scan_state.token.position.line;
+		}
+		++scan_state.stream;
+	}
+}
+
+static void scan_numeric()
+{
+	assert(isdigit(*scan_state.stream));
+	const char* stream = scan_state.stream;
+
+	// Scanning either in or float
+	// Do look-ahead until we know which
+	while (isdigit((int)*stream))
+	{
+		++stream;
+	}
+
+	if (*stream == '.' || tolower(*stream) == 'e')
+	{
+		scan_float();
+	}
+	else
+	{
+		scan_int();
+	}
+}
+
+// Helper macros
+#define CASE1(value, token_type)\
+case value:\
+	scan_state.token.token.type = token_type;\
+	++scan_state.stream;\
+	break;
 
 void scan_next()
 {
+	bool repeat;
+	do
+	{
+		repeat = false;
+		scan_state.token.token.modifier = MOD_NONE;
+		scan_state.token.token.suffix = SUFFIX_NONE;
 
+		// Remove leading spaces, newlines, etc.
+		scan_skip_spaces();
+		scan_state.token.start = scan_state.stream;
+
+		switch (*scan_state.stream)
+		{
+		case '\'':
+			scan_char();
+			break;
+
+		case '"':
+			scan_str();
+			break;
+
+		case '.':
+			if (isdigit(scan_state.stream[1]))
+			{
+				scan_float();
+			}
+			else if (scan_state.stream[1] == '.' && scan_state.stream[2] == '.')
+			{
+				scan_state.token.token.type = TOKEN_ELLIPSIS;
+				scan_state.stream += 3;
+			}
+			else
+			{
+				scan_state.token.token.type = TOKEN_DOT;
+				++scan_state.stream;
+			}
+			break;
+
+		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+			scan_numeric();
+			break;
+
+		case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g': case 'h': case 'i': case 'j':
+		case 'k': case 'l': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't':
+		case 'u': case 'v': case 'w': case 'x': case 'y': case 'z':
+		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G': case 'H': case 'I': case 'J':
+		case 'K': case 'L': case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T':
+		case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
+		case '_':
+			// Identifier or keyword
+			while (isalnum(*scan_state.stream) || *scan_state.stream == '_')
+			{
+				++scan_state.stream;
+			}
+			scan_state.token.token.name = intern_string_range(scan_state.token.start, scan_state.stream);
+			scan_state.token.token.type = keywords_is_keyword(scan_state.token.token.name) ? TOKEN_KEYWORD : TOKEN_NAME;
+			break;
+
+		case '\0': 
+			// End of stream reached, do not move stream pointer
+			scan_state.token.token.type = TOKEN_EOF;
+			break;
+
+		default:
+			scan_log_error_here("Invalid '%c' token, skipping", *scan_state.stream);
+			++scan_state.stream;
+			repeat = true;
+		}
+	} while (repeat);
+
+	// Finalize token
+	scan_state.token.end = scan_state.stream;
+}
+
+const scan_token_t* scan_get_token()
+{
+	return &scan_state.token;
 }
