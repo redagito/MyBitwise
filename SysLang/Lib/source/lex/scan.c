@@ -109,66 +109,6 @@ static void scan_log_fatal(source_position_t position, const char* fmt, ...)
 #define scan_log_error_here(...) (scan_log_error(scan_state.token.position, __VA_ARGS__))
 #define scan_log_fatal_here(...) (scan_log_fatal(scan_state.token.position, __VA_ARGS__))
 
-/**
-* Provides information for current token
-*/
-static bool scan_is_type(token_type_t type)
-{
-	return scan_state.token.token.type == type;
-}
-
-static bool scan_is_eof()
-{
-	return scan_is_type(TOKEN_EOF);
-}
-
-// Use interned strings only
-// TODO Rename 'name' to 'identifier'
-static bool scan_is_name(const char* name)
-{
-	return scan_is_type(TOKEN_NAME) && scan_state.token.token.name == name;
-}
-
-static bool scan_is_keyword(const char* keyword)
-{
-	return scan_is_type(TOKEN_KEYWORD) && scan_state.token.token.name == keyword;
-}
-
-/**
-* Attempt to match current token and retrieve next token on success
-* Returns true if matched and false otherwise
-*/
-static bool scan_match_keyword(const char* keyword)
-{
-	if (!scan_is_keyword(keyword))
-	{
-		return false;
-	}
-	scan_next();
-	return true;
-}
-
-static bool scan_match_type(token_type_t type)
-{
-	if (!scan_is_type(type))
-	{
-		return false;
-	}
-	scan_next();
-	return true;
-}
-
-/**
-* Same as scan_match_type but logs a fatal error on mismatch.
-*/
-static void scan_expect_type(token_type_t type)
-{
-	if (!scan_match_type(type))
-	{
-		scan_log_fatal_here("Expected token %s, got %s", token_type_name(type), scan_token_info());
-	}
-}
-
 static unsigned long long scan_uintval(int base)
 {
 	unsigned long long value = 0;
@@ -670,6 +610,33 @@ case value:\
 	++scan_state.stream;\
 	break;
 
+#define CASE2(value1, token_type1, value2, token_type2)\
+case value1:\
+	scan_state.token.token.type = token_type1;\
+	++scan_state.stream;\
+	if (*scan_state.stream == value2)\
+	{\
+		scan_state.token.token.type = token_type2; \
+		++scan_state.stream; \
+	}\
+	break;
+
+#define CASE3(value1, token_type1, value2, token_type2, value3, token_type3)\
+case value1:\
+	scan_state.token.token.type = token_type1;\
+	++scan_state.stream;\
+	if (*scan_state.stream == value2)\
+	{\
+		scan_state.token.token.type = token_type2; \
+		++scan_state.stream; \
+	}\
+	else if (*scan_state.stream == value3)\
+	{\
+		scan_state.token.token.type = token_type3; \
+		++scan_state.stream; \
+	}\
+	break;
+
 void scan_next()
 {
 	bool repeat;
@@ -787,6 +754,29 @@ void scan_next()
 			scan_state.token.token.type = TOKEN_EOF;
 			break;
 
+		CASE1('(', TOKEN_LPAREN)
+		CASE1(')', TOKEN_RPAREN)
+		CASE1('{', TOKEN_LBRACE)
+		CASE1('}', TOKEN_RBRACE)
+		CASE1('[', TOKEN_LBRACKET)
+		CASE1(']', TOKEN_RBRACKET)
+		CASE1(',', TOKEN_COMMA)
+		CASE1('@', TOKEN_AT)
+		CASE1('#', TOKEN_POUND)
+		CASE1('?', TOKEN_QUESTION)
+		CASE1(';', TOKEN_SEMICOLON)
+		CASE1('~', TOKEN_NEG) // TODO No negate assign "~="?
+		CASE2('!', TOKEN_NOT, '=', TOKEN_NOTEQ)
+		CASE2(':', TOKEN_COLON, '=', TOKEN_COLON_ASSIGN)
+		CASE2('=', TOKEN_ASSIGN, '=', TOKEN_EQ)
+		CASE2('^', TOKEN_XOR, '=', TOKEN_XOR_ASSIGN)
+		CASE2('*', TOKEN_MUL, '=', TOKEN_MUL_ASSIGN)
+		CASE2('%', TOKEN_MOD, '=', TOKEN_MOD_ASSIGN)
+		CASE3('+', TOKEN_ADD, '=', TOKEN_ADD_ASSIGN, '+', TOKEN_INC)
+		CASE3('-', TOKEN_SUB, '=', TOKEN_SUB_ASSIGN, '-', TOKEN_DEC)
+		CASE3('&', TOKEN_AND, '=', TOKEN_AND_ASSIGN, '&', TOKEN_AND_AND)
+		CASE3('|', TOKEN_OR, '=', TOKEN_OR_ASSIGN, '|', TOKEN_OR_OR)
+
 		default:
 			scan_log_error_here("Invalid '%c' token, skipping", *scan_state.stream);
 			++scan_state.stream;
@@ -801,4 +791,52 @@ void scan_next()
 const scan_token_t* scan_get_token()
 {
 	return &scan_state.token;
+}
+
+bool scan_is_type(token_type_t type)
+{
+	return scan_state.token.token.type == type;
+}
+
+bool scan_is_eof()
+{
+	return scan_is_type(TOKEN_EOF);
+}
+
+bool scan_is_name(const char* name)
+{
+	return scan_is_type(TOKEN_NAME) && scan_state.token.token.name == name;
+}
+
+bool scan_is_keyword(const char* keyword)
+{
+	return scan_is_type(TOKEN_KEYWORD) && scan_state.token.token.name == keyword;
+}
+
+bool scan_match_keyword(const char* keyword)
+{
+	if (!scan_is_keyword(keyword))
+	{
+		return false;
+	}
+	scan_next();
+	return true;
+}
+
+bool scan_match_type(token_type_t type)
+{
+	if (!scan_is_type(type))
+	{
+		return false;
+	}
+	scan_next();
+	return true;
+}
+
+void scan_expect_type(token_type_t type)
+{
+	if (!scan_match_type(type))
+	{
+		scan_log_fatal_here("Expected token %s, got %s", token_type_name(type), scan_token_info());
+	}
 }

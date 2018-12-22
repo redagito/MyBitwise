@@ -25,7 +25,7 @@ typedef enum token_type_t
 	TOKEN_FLOAT,
 	TOKEN_STR,
 	TOKEN_NAME, // TODO Change to TOKEN_IDENTIFIER
-	TOKEN_NEG,
+	TOKEN_NEG, // Bitwise negation
 	TOKEN_NOT,
 	TOKEN_COMMENT,
 
@@ -44,7 +44,7 @@ typedef enum token_type_t
 	TOKEN_ADD = TOKEN_FIRST_ADD,
 	TOKEN_SUB,
 	TOKEN_XOR,
-	TOKEN_OR,
+	TOKEN_OR, // Bitwise OR
 	TOKEN_LAST_ADD = TOKEN_OR,
 
 	// Comparative precedence
@@ -57,7 +57,7 @@ typedef enum token_type_t
 	TOKEN_GTEQ,
 	TOKEN_LAST_CMP = TOKEN_GTEQ,
 	TOKEN_AND_AND,
-	TOKEN_OR_OR,
+	TOKEN_OR_OR, // Logical OR
 
 	// Assignment operators
 	TOKEN_FIRST_ASSIGN,
