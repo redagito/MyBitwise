@@ -501,7 +501,7 @@ static void scan_str_multi_line(char** str)
 static void scan_str_single_line(char** str)
 {
 	// Single line string
-	while (scan_state.stream != 0 && *scan_state.stream != '\n')
+	while (scan_state.stream != 0 && *scan_state.stream != '"')
 	{
 		char value = *scan_state.stream;
 		if (value == '\n')
@@ -621,6 +621,48 @@ static void scan_numeric()
 	}
 }
 
+static void scan_comment_single_line()
+{
+	// Just read until end of line
+	char* buffer = NULL;
+	while (*scan_state.stream != 0)
+	{
+		if (scan_match_char('\n'))
+		{
+			break;
+		}
+		buffer_push(buffer, *scan_state.stream);
+		++scan_state.stream;
+	}
+
+	buffer_push(buffer, 0);
+	scan_state.token.token.comment_text = buffer;
+	scan_state.token.token.type = TOKEN_COMMENT;
+}
+
+static void scan_comment_multi_line()
+{
+	char* buffer = NULL;
+	while (*scan_state.stream != 0)
+	{
+		if (scan_state.stream[0] == '*' && scan_state.stream[1] == '/')
+		{
+			scan_state.stream += 2;
+			break;
+		}
+		else if (*scan_state.stream == '\n')
+		{
+			++scan_state.token.position.line;
+		}
+		buffer_push(buffer, *scan_state.stream);
+		++scan_state.stream;
+	}
+	buffer_push(buffer, 0);
+	scan_state.token.token.comment_text = buffer;
+	scan_state.token.token.type = TOKEN_COMMENT;
+	scan_state.token.token.modifier = MOD_MULTILINE;
+}
+
 // Helper macros
 #define CASE1(value, token_type)\
 case value:\
@@ -686,6 +728,58 @@ void scan_next()
 			}
 			scan_state.token.token.name = intern_string_range(scan_state.token.start, scan_state.stream);
 			scan_state.token.token.type = keywords_is_keyword(scan_state.token.token.name) ? TOKEN_KEYWORD : TOKEN_NAME;
+			break;
+
+		case '<':
+			scan_state.token.token.type = TOKEN_LT;
+			++scan_state.stream;
+			if (scan_match_char('<'))
+			{
+				scan_state.token.token.type = TOKEN_LSHIFT;
+				if (scan_match_char('='))
+				{
+					scan_state.token.token.type = TOKEN_LSHIFT_ASSIGN;
+				}
+			}
+			else if (scan_match_char('='))
+			{
+				scan_state.token.token.type = TOKEN_LTEQ;
+			}
+			break;
+
+		case '>':
+			scan_state.token.token.type = TOKEN_GT;
+			++scan_state.stream;
+			if (scan_match_char('>'))
+			{
+				scan_state.token.token.type = TOKEN_RSHIFT;
+				if (scan_match_char('='))
+				{
+					scan_state.token.token.type = TOKEN_RSHIFT_ASSIGN;
+				}
+			}
+			else if (scan_match_char('='))
+			{
+				scan_state.token.token.type = TOKEN_GTEQ;
+			}
+			break;
+
+		case '/':
+			scan_state.token.token.type = TOKEN_DIV;
+			++scan_state.stream;
+			if (scan_match_char('='))
+			{
+				scan_state.token.token.type = TOKEN_DIV_ASSIGN;
+			}
+			else if (scan_match_char('/'))
+			{
+				// Single line comment
+				scan_comment_single_line();
+			}
+			else if (scan_match_char('*'))
+			{
+				scan_comment_multi_line();
+			}
 			break;
 
 		case '\0': 

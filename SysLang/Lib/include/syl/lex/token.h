@@ -117,10 +117,15 @@ typedef struct token_t
 	// Data
 	union
 	{
+		// Set for numeric types
 		unsigned long long int_val;
 		double float_val;
+		// Set for strings
 		const char* str_val;
+		// Set for identifiers
 		const char* name;
+		// Set for comments (single- or multiline)
+		const char* comment_text;
 	};
 } token_t;
 
