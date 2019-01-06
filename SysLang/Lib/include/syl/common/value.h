@@ -4,27 +4,26 @@
 #include <stdint.h>
 
 /**
-* Any type value
-*/
+ * Any type value
+ */
 
-typedef union value_t
-{
-	bool b;
-	char c;
-	unsigned char uc;
-	signed char sc;
+typedef union value_t {
+  bool b;
+  char c;
+  unsigned char uc;
+  signed char sc;
 
-	short s;
-	unsigned short us;
+  short s;
+  unsigned short us;
 
-	int i;
-	unsigned int ui;
+  int i;
+  unsigned int ui;
 
-	long l;
-	unsigned long ul;
+  long l;
+  unsigned long ul;
 
-	long long ll;
-	unsigned long long ull;
+  long long ll;
+  unsigned long long ull;
 
-	uintptr_t p;
+  uintptr_t p;
 } value_t;
