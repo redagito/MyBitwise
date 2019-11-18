@@ -133,7 +133,7 @@ static void type_register(type_t *type) {
   map_put_from_uint64(&type_id_map, type->type_id, type);
 }
 
-static type_t *type_alloc(type_type_t t)
+type_t *type_alloc(type_type_t t)
 {
 	type_t* type = xcalloc(1, sizeof(type_t));
 	type->type = t;
@@ -237,11 +237,6 @@ static void type_init_metrics(os_t os, arch_t arch) {
 void type_init(os_t os, arch_t arch) {
   type_init_metrics(os, arch);
   type_init_builtins();
-}
-
-void type_complete(type_t *type)
-{
-
 }
 
 type_t *type_get_by_id(typeid_t id);

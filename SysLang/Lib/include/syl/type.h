@@ -93,7 +93,10 @@ typedef struct type_metrics_t {
  */
 void type_init(os_t os, arch_t arch);
 
-void type_complete(type_t *type);
+/**
+* Allocates new type by type
+*/
+type_t *type_alloc(type_type_t t);
 
 type_t *type_get_by_id(typeid_t id);
 
@@ -131,11 +134,6 @@ size_t type_alignof(type_t *type);
  * Returns pointer type to base type
  */
 type_t *type_ptr(type_t *base);
-
-/**
- * Returns const type of base type
- */
-type_t *type_const(type_t *base);
 
 /**
  * Returns type without const qualifier
